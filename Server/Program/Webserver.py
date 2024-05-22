@@ -38,7 +38,7 @@ def export_logs():
     log_line = "TimeStamp,User,Tag UID,Door ID,Granted,\n"
     log_output.write(log_line)
     for log in logs:
-        log_line = f"{log[0]},{log[1]},{log[2]},{log[3]},{'Yes' if log[4] else 'No'},\n"
+        log_line = f"{log[0]},{log[1]},{log[2]},{log[4]},{'Yes' if log[3] else 'No'},\n"
         log_output.write(log_line)
     
     # Set the position to the beginning of the stream
