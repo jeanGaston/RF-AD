@@ -35,6 +35,8 @@ def export_logs():
     
     # Create a file-like string to write logs
     log_output = io.StringIO()
+    log_line = "TimeStamp,User,Tag UID,Door ID,Granted,\n"
+    log_output.write(log_line)
     for log in logs:
         log_line = f"{log[0]},{log[1]},{log[2]},{log[3]},{'Yes' if log[4] else 'No'},\n"
         log_output.write(log_line)
