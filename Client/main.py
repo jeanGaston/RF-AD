@@ -7,7 +7,7 @@ from mfrc522 import MFRC522
 from ssd1306 import SSD1306_I2C
 
 # Global variables
-DOOR_ID = 1
+DOOR_ID = '[Your door ID]'
 WLAN_SSID = '[Your SSID]'
 WLAN_PASS = '[Your password]'
 SERVER_IP = '[Your server IP]'
