@@ -5,8 +5,9 @@ It was developped for the final project of my BTS SNIR (French for an IT and ele
 
 ## Prerequisites
 
-- Docker ➡️ [Official Guide to install docker](https://docs.docker.com/engine/install/)
-- Fully installed AD ➡️ [Here is a guide](https://www.easeus.com/todo-backup-guide/how-to-install-active-directory-on-windows-server-2022.html) 
+- Docker ➡️ [Official Guide to install docker](https://docs.docker.com/engine/install/)  
+⚠️ I cannot guarantee the accuracy of the information contained in this guide. ⚠️
+- Fully installed AD ➡️ [Here is a guide](https://www.easeus.com/todo-backup-guide/how-to-install-active-directory-on-windows-server-2022.html)  
 ⚠️ I cannot guarantee the accuracy of the information contained in this guide. ⚠️
 
 
