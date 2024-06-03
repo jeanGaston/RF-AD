@@ -8,19 +8,16 @@ from env import *
 app = Flask(__name__)
 
 
-
-
-
 # Route to the home
 @app.route('/')
-def add_door_form():
+def index():
     existing_groups = get_existing_groups(DBFILE)  # Update with your database file path
     logs = get_latest_logs(DBFILE,5)
     #print(logs[0])
     return render_template('./index.html', existing_groups=existing_groups, logs=logs)
 # Route to display the fuser db
 @app.route('/UserDB')
-def index():
+def usersdb():
     users = get_users()
     return render_template('userdb.html', users=users)
 # Route to display the fuser db
@@ -51,6 +48,16 @@ def export_logs():
         headers={"Content-disposition": "attachment; filename=logs.csv"}
     )
 
+@app.route('/GroupsDB')
+def groupsdb():
+    doors = get_doors()
+    groups = get_existing_groups(DBFILE)
+    return render_template('groupsdb.html', doors=doors, groups=groups)
+
+@app.route('/delete_group/<group_cn>', methods=['POST'])
+def delete_group(group_cn):
+    delete_group_from_database(group_cn)
+    return render_template('./index.html')
 # Route to handle form submission and add the door to the database
 @app.route('/add_door', methods=['POST'])
 def add_door():
@@ -69,7 +76,6 @@ def add_door():
 def sync():
     sync_ldap_to_database(DBFILE)
     return render_template('./LDAP.html')
-    redirect('/')
 
 
 # Route to handle door access requests

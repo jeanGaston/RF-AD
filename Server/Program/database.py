@@ -144,7 +144,7 @@ def print_database_content(db_file):
     print_users_table(cursor)
     print_groups_table(cursor)
     print_doors_table(cursor)
-    print_log_table(cursor)
+    #print_log_table(cursor)
     
     conn.close()
     
@@ -201,7 +201,21 @@ def get_existing_groups(db_file):
     except sqlite3.Error as e:
         print(f"SQLite Error: {e}")
         return []
-    
+def delete_group_from_database(group_cn):
+    conn = sqlite3.connect(DBFILE)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM Groups WHERE cn = ?", (group_cn,))
+    conn.commit()
+    conn.close()
+
+def get_doors():
+    conn = sqlite3.connect(DBFILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM Doors")
+    doors = cursor.fetchall()
+    conn.close()
+    return doors
+
 def get_users():
     """
     Fetch all users from the Users table in the database.
@@ -215,6 +229,7 @@ def get_users():
     
     conn.close()
     return users
+
 # Function to add a door to the database
 def add_door_to_database(db_file, group_cn, Door_id):
     try:
