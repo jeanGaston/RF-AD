@@ -5,13 +5,8 @@ import time
 from machine import Pin, SPI, I2C
 from mfrc522 import MFRC522
 from ssd1306 import SSD1306_I2C
+from env import (DOOR_ID, WLAN_SSID, WLAN_SSID, WLAN_PASS, SERVER_IP, SERVER_PORT)
 
-# Global variables
-DOOR_ID = "[Your door ID]"
-WLAN_SSID = "[Your SSID]"
-WLAN_PASS = "[Your password]"
-SERVER_IP = "[Your server IP]"
-SERVER_PORT = 5000
 
 # Initialize RFID reader
 reader = MFRC522(spi_id=0, sck=6, miso=4, mosi=7, cs=5, rst=22)
@@ -62,6 +57,35 @@ def display_message(message, ip_address):
         print("display error:", e)
         init_oled()
 
+def test_server_connection(ip_address):
+    while True:
+        try:
+            response = requests.get(f"http://{SERVER_IP}:{SERVER_PORT}/")
+            if response.status_code == 200:
+                print("Server connection successful")
+                #display_message(f"Server Connected\nIP: {ip_address}", ip_address)
+                return
+            else:
+                print("Server connection failed")
+                display_message(f"Server Fail\nIP: {ip_address}", ip_address)
+        except Exception as e:
+            print("Server connection error:", e)
+            display_message(f"Server Error\n{e}\nIP: {ip_address}", ip_address)
+
+        # Reconnection loop
+        while True:
+            try:
+                response = requests.get(f"http://{SERVER_IP}:{SERVER_PORT}/")
+                if response.status_code == 200:
+                    print("Reconnected successfully")
+                    display_message(f"Server Reconnected\nIP: {ip_address}", ip_address)
+                    time.sleep(1)
+                    return
+                display_message(f"Reconnecting...\nIP: {ip_address}", ip_address)
+                time.sleep(1)
+            except Exception as e:
+                display_message(f"Reconnect Error\n{e}\nIP: {ip_address}", ip_address)
+                time.sleep(5)
 
 # Connect to WiFi
 def connect_wifi(ssid, password):
@@ -74,46 +98,23 @@ def connect_wifi(ssid, password):
     ip_address = wlan.ifconfig()[0]
     print("Connected to WiFi:", ip_address)
     display_message("WiFi Connected", ip_address)
+    test_server_connection(ip_address)
+    display_message(f"Server Connected\nIP: {ip_address}", ip_address)
+    time.sleep(1)
 
-    # Test connection to the server
-
-    try:
-        response = requests.get(f"http://{SERVER_IP}:{SERVER_PORT}/")
-        if response.status_code == 200:
-            print("Server connection successful")
-            display_message("Server Connected", ip_address)
-        else:
-            print("Server connection failed")
-            display_message("Server Fail", ip_address)
-            time.sleep(5)
-            while response.status_code != 200:
-                wlan.connect(ssid, password)
-                response = requests.get(f"http://{SERVER_IP}:{SERVER_PORT}/")
-                display_message("Reconnecting ...", ip_address)
-                time.sleep(1)
-    except Exception as e:
-        print("Server connection error:", e)
-        display_message(f"Server Error \n {e}", ip_address)
-        time.sleep(5)
-
-
-#         while response.status_code != 200 :
-#             wlan.connect(ssid, password)
-#             try :
-#                 response = requests.get(f"http://{SERVER_IP}:{SERVER_PORT}/")
-#                 display_message('Reconnecting ...', ip_address)
-#                 time.sleep(1)
-#             except:
-#                 pass
 # Function to send RFID UID to the server
 def send_rfid_to_server(rfid_uid):
-    url = f"http://{SERVER_IP}:{SERVER_PORT}/access"
-    headers = {"Content-Type": "application/json"}
-    data = {"rfid_uid": rfid_uid, "door_id": DOOR_ID}
-    response = requests.post(url, headers=headers, data=json.dumps(data))
-    return response.json()
-
-
+    try :
+        url = f"http://{SERVER_IP}:{SERVER_PORT}/access"
+        headers = {"Content-Type": "application/json"}
+        data = {"rfid_uid": rfid_uid, "door_id": DOOR_ID}
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+        #print(response.json())
+        return response.json()
+    except Exception as e:
+        test_server_connection(ip_address = network.WLAN(network.STA_IF).ifconfig()[0])
+        return {'access_granted': False}
+    
 # Main loop to scan RFID tags
 def main():
     # Retry mechanism for OLED initialization

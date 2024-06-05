@@ -29,13 +29,14 @@ You can follow this guide from the raspebery py blog to initialize your Pi Pico
 Now that you Pi Pico is fully operationnal, you can upload the content of the [Client folder](../Client/) to it.
 
 ⚠️ The WIFI network **MUST** be available in 2.4 Ghz
-⚠️ Don't forget to change those variable at the beginning of [main.py](../Client/main.py)  
+⚠️ Don't forget to create the file env.py with this content  
 
 ``` python
 # Global variables
-DOOR_ID = '[Your door ID]'
+DOOR_ID = '[Your door ID]' #Without the quote
 WLAN_SSID = '[Your SSID]'
 WLAN_PASS = '[Your password]'
 SERVER_IP = '[Your server IP]'
+SERVER_PORT = 5000
 ```
 
