@@ -6,7 +6,7 @@ import schedule
 
 
 setup_database(DBFILE)
-#print_database_content(DBFILE)
+# print_database_content(DBFILE)
 run_webServer_thread()
 schedule_sync_ldap_to_database(DBFILE)
 

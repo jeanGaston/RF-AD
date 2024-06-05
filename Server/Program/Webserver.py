@@ -10,9 +10,17 @@ from flask import (
 )
 import io
 from ldapSync import sync_ldap_to_database
-from database import (add_door_to_database, check_access, delete_group_from_database,
-                      get_doors, get_existing_groups, get_latest_logs, get_logs, get_users,
-                      log_access_attempt)
+from database import (
+    add_door_to_database,
+    check_access,
+    delete_group_from_database,
+    get_doors,
+    get_existing_groups,
+    get_latest_logs,
+    get_logs,
+    get_users,
+    log_access_attempt,
+)
 from env import DBFILE, WebServerPORT
 
 app = Flask(__name__)
