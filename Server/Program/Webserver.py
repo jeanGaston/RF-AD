@@ -1,35 +1,50 @@
 from threading import Thread
-from flask import Flask, render_template, send_file, Response, request, redirect, jsonify
+from flask import (
+    Flask,
+    render_template,
+    send_file,
+    Response,
+    request,
+    redirect,
+    jsonify,
+)
 import io
 from ldapSync import sync_ldap_to_database
-from database import *
-from env import *
+from database import (add_door_to_database, check_access, delete_group_from_database,
+                      get_doors, get_existing_groups, get_latest_logs, get_logs, get_users,
+                      log_access_attempt)
+from env import DBFILE, WebServerPORT
 
 app = Flask(__name__)
 
 
 # Route to the home
-@app.route('/')
+@app.route("/")
 def index():
     existing_groups = get_existing_groups(DBFILE)  # Update with your database file path
-    logs = get_latest_logs(DBFILE,5)
-    #print(logs[0])
-    return render_template('./index.html', existing_groups=existing_groups, logs=logs)
+    logs = get_latest_logs(DBFILE, 5)
+    # print(logs[0])
+    return render_template("./index.html", existing_groups=existing_groups, logs=logs)
+
+
 # Route to display the fuser db
-@app.route('/UserDB')
+@app.route("/UserDB")
 def usersdb():
     users = get_users()
-    return render_template('userdb.html', users=users)
+    return render_template("userdb.html", users=users)
+
+
 # Route to display the fuser db
-@app.route('/LogsDB')
+@app.route("/LogsDB")
 def logsdb():
     logs = get_logs()
-    return render_template('logsdb.html', logs=logs)
+    return render_template("logsdb.html", logs=logs)
 
-@app.route('/export_logs')
+
+@app.route("/export_logs")
 def export_logs():
     logs = get_logs()
-    
+
     # Create a file-like string to write logs
     log_output = io.StringIO()
     log_line = "TimeStamp,User,Tag UID,Door ID,Granted,\n"
@@ -37,75 +52,83 @@ def export_logs():
     for log in logs:
         log_line = f"{log[0]},{log[1]},{log[2]},{log[4]},{'Yes' if log[3] else 'No'},\n"
         log_output.write(log_line)
-    
+
     # Set the position to the beginning of the stream
     log_output.seek(0)
-    
+
     # Create a response with the file data
     return Response(
         log_output,
         mimetype="text/plain",
-        headers={"Content-disposition": "attachment; filename=logs.csv"}
+        headers={"Content-disposition": "attachment; filename=logs.csv"},
     )
 
-@app.route('/GroupsDB')
+
+@app.route("/GroupsDB")
 def groupsdb():
     doors = get_doors()
     groups = get_existing_groups(DBFILE)
-    return render_template('groupsdb.html', doors=doors, groups=groups)
+    return render_template("groupsdb.html", doors=doors, groups=groups)
 
-@app.route('/delete_group/<group_cn>', methods=['POST'])
+
+@app.route("/delete_group/<group_cn>", methods=["POST"])
 def delete_group(group_cn):
     delete_group_from_database(group_cn)
-    return render_template('./index.html')
+    return render_template("./index.html")
+
+
 # Route to handle form submission and add the door to the database
-@app.route('/add_door', methods=['POST'])
+@app.route("/add_door", methods=["POST"])
 def add_door():
     Door_id = request.form["Door_id"]
     group_cn = request.form["group_cn"]
-    
-      # Update with your database file path
+
+    # Update with your database file path
     exec = add_door_to_database(DBFILE, group_cn, Door_id)
     if add_door_to_database(DBFILE, group_cn, Door_id):
-        return redirect('/')
+        return redirect("/")
     else:
         return f"Failed to add door to the database."
 
+
 # Route to handle sync button click
-@app.route('/sync')
+@app.route("/sync")
 def sync():
     sync_ldap_to_database(DBFILE)
-    return render_template('./LDAP.html')
+    return render_template("./LDAP.html")
 
 
 # Route to handle door access requests
-@app.route('/access', methods=['POST'])
+@app.route("/access", methods=["POST"])
 def door_access():
     data = request.get_json()
-    rfid_uid = data.get('rfid_uid')
-    door_id = data.get('door_id')
+    rfid_uid = data.get("rfid_uid")
+    door_id = data.get("door_id")
 
     if rfid_uid is None or door_id is None:
-        return jsonify({'error': 'RFID UID and door ID are required'}), 400
+        return jsonify({"error": "RFID UID and door ID are required"}), 400
 
     access_granted, upn = check_access(rfid_uid, door_id)
     if access_granted:
-        print('')
-        log_access_attempt(DBFILE,upn,rfid_uid,True,door_id)
-        return jsonify({'access_granted': True, 'upn': upn}), 200
-    
+        print("")
+        log_access_attempt(DBFILE, upn, rfid_uid, True, door_id)
+        return jsonify({"access_granted": True, "upn": upn}), 200
+
     else:
-        log_access_attempt(DBFILE,upn,rfid_uid,False,door_id)
-        return jsonify({'access_granted': False}), 403
-    
+        log_access_attempt(DBFILE, upn, rfid_uid, False, door_id)
+        return jsonify({"access_granted": False}), 403
+
 
 def run_flask_app():
-    app.run(debug=True, use_reloader=False, port=5000, host="0.0.0.0")
+    app.run(debug=True, use_reloader=False, port=WebServerPORT, host="0.0.0.0")
+
+
 def run_webServer_thread():
-    print(f'STARTING WEB SERVER ON PORT {WebServerPORT}')
+    print(f"STARTING WEB SERVER ON PORT {WebServerPORT}")
     flask_thread = Thread(target=run_flask_app, daemon=True)
     flask_thread.start()
     # flask_thread.join()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app.run(debug=True)
