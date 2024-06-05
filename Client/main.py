@@ -2,10 +2,11 @@ import network
 import urequests as requests
 import ujson as json
 import time
-from machine import Pin, SPI, I2C
+from machine import Pin, SPI, I2C, Timer
+import _thread
 from mfrc522 import MFRC522
 from ssd1306 import SSD1306_I2C
-from env import (DOOR_ID, WLAN_SSID, WLAN_SSID, WLAN_PASS, SERVER_IP, SERVER_PORT)
+from env import DOOR_ID, WLAN_SSID, WLAN_SSID, WLAN_PASS, SERVER_IP, SERVER_PORT
 
 
 # Initialize RFID reader
@@ -26,6 +27,12 @@ redled.on()
 time.sleep(0.5)
 redled.off()
 
+# Global variables
+last_activity_time = time.time()
+screensaver_active = False
+screensaver_thread_running = False
+inactivity_timer = Timer(-1)
+
 
 def init_oled():
     global oled
@@ -40,6 +47,10 @@ def init_oled():
 
 
 def display_message(message, ip_address):
+    global last_activity_time, screensaver_active, screensaver_thread_running
+    last_activity_time = time.time()
+    screensaver_active = False
+    screensaver_thread_running = False
     try:
         oled.fill(0)
         oled.text(f"Door ID: {DOOR_ID}", 0, 0)  # Display Door ID at the top
@@ -57,13 +68,57 @@ def display_message(message, ip_address):
         print("display error:", e)
         init_oled()
 
+
+def screensaver():
+    global screensaver_active, screensaver_thread_running
+    x, y = 0, 0
+    direction_x, direction_y = 1, 1
+    while screensaver_active:
+        oled.fill(0)
+        oled.text("RF-AD", x, y)
+        oled.show()
+        time.sleep(0.05)
+
+        x += direction_x
+        y += direction_y
+
+        if x <= 0 or x >= 128 - 36:  # 36 is the length of "RF-AD"
+            direction_x *= -1
+        if y <= 0 or y >= 64 - 10:  # 10 is the height of text
+            direction_y *= -1
+
+        # Check for activity
+        if time.time() - last_activity_time <= 60:
+            screensaver_active = False
+            screensaver_thread_running = False
+            break
+
+
+def start_screensaver_thread():
+    global screensaver_active, screensaver_thread_running
+    if not screensaver_thread_running:
+        screensaver_active = True
+        screensaver_thread_running = True
+        _thread.start_new_thread(screensaver, ())
+
+
+def handle_inactivity(timer):
+    if time.time() - last_activity_time > 60:
+        start_screensaver_thread()
+
+
+def reset_inactivity_timer():
+    global last_activity_time
+    last_activity_time = time.time()
+
+
 def test_server_connection(ip_address):
     while True:
         try:
             response = requests.get(f"http://{SERVER_IP}:{SERVER_PORT}/")
             if response.status_code == 200:
                 print("Server connection successful")
-                #display_message(f"Server Connected\nIP: {ip_address}", ip_address)
+                # display_message(f"Server Connected\nIP: {ip_address}", ip_address)
                 return
             else:
                 print("Server connection failed")
@@ -87,6 +142,7 @@ def test_server_connection(ip_address):
                 display_message(f"Reconnect Error\n{e}\nIP: {ip_address}", ip_address)
                 time.sleep(5)
 
+
 # Connect to WiFi
 def connect_wifi(ssid, password):
     wlan = network.WLAN(network.STA_IF)
@@ -102,19 +158,21 @@ def connect_wifi(ssid, password):
     display_message(f"Server Connected\nIP: {ip_address}", ip_address)
     time.sleep(1)
 
+
 # Function to send RFID UID to the server
 def send_rfid_to_server(rfid_uid):
-    try :
+    try:
         url = f"http://{SERVER_IP}:{SERVER_PORT}/access"
         headers = {"Content-Type": "application/json"}
         data = {"rfid_uid": rfid_uid, "door_id": DOOR_ID}
         response = requests.post(url, headers=headers, data=json.dumps(data))
-        #print(response.json())
+        #  print(response.json())
         return response.json()
     except Exception as e:
-        test_server_connection(ip_address = network.WLAN(network.STA_IF).ifconfig()[0])
-        return {'access_granted': False}
-    
+        test_server_connection(ip_address=network.WLAN(network.STA_IF).ifconfig()[0])
+        return {"access_granted": False}
+
+
 # Main loop to scan RFID tags
 def main():
     # Retry mechanism for OLED initialization
@@ -129,12 +187,15 @@ def main():
     connect_wifi(WLAN_SSID, WLAN_PASS)
     ip_address = network.WLAN(network.STA_IF).ifconfig()[0]
     display_message("Scan your tag", ip_address)
+    inactivity_timer.init(period=1000, mode=Timer.PERIODIC, callback=handle_inactivity)
 
     while True:
         (status, tag_type) = reader.request(reader.REQIDL)
         if status == reader.OK:
             (status, uid) = reader.SelectTagSN()
             if status == reader.OK:
+                reset_inactivity_timer()
+
                 rfid_uid_decimal = "".join([str(i) for i in uid])
                 print("RFID UID:", rfid_uid_decimal)
                 display_message("Checking...", ip_address)
