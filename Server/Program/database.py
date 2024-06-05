@@ -232,6 +232,7 @@ def delete_group_from_database(group_cn):
     conn = sqlite3.connect(DBFILE)
     cursor = conn.cursor()
     cursor.execute("DELETE FROM Groups WHERE cn = ?", (group_cn,))
+    cursor.execute("DELETE FROM Doors WHERE GroupCn = ?", (group_cn,))
     conn.commit()
     conn.close()
 

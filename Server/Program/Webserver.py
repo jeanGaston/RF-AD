@@ -10,10 +10,10 @@ from flask import (
 )
 import io
 from ldapSync import sync_ldap_to_database
-from database import (WebServerPORT, add_door_to_database, check_access, delete_group_from_database,
+from database import (add_door_to_database, check_access, delete_group_from_database,
                       get_doors, get_existing_groups, get_latest_logs, get_logs, get_users,
                       log_access_attempt)
-from env import DBFILE
+from env import DBFILE, WebServerPORT
 
 app = Flask(__name__)
 
@@ -120,7 +120,7 @@ def door_access():
 
 
 def run_flask_app():
-    app.run(debug=True, use_reloader=False, port=5000, host="0.0.0.0")
+    app.run(debug=True, use_reloader=False, port=WebServerPORT, host="0.0.0.0")
 
 
 def run_webServer_thread():
