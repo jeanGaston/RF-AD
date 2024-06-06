@@ -8,6 +8,7 @@
     - [3. Clone the Repository](./server.md/#3-clone-the-repository)
     - [4. Create the .env File](./server.md/#4-create-the-env-file)
     - [5. Build and Run the Docker Container](./server.md/#5-build-and-run-the-docker-container)
+
 # The Active Directory part
 
 ## 1. Modify the LDAP Schema
@@ -77,9 +78,9 @@ Then navigate into the server folder
 ```bash
 cd ./RD-AD/Server
 ```
-## 4. Create the .env File
+## 4. Create the `.env` File
 
-Create a .env file in the [server directory](../Server/) with the following content:
+Create a `.env` file in the [server directory](../Server/) with the following content:
 
 ```
 LDAPUSER=[The user you have created earlier] 
