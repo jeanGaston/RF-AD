@@ -1,15 +1,6 @@
-from threading import Thread
-from flask import (
-    Flask,
-    render_template,
-    send_file,
-    Response,
-    request,
-    redirect,
-    jsonify,
-)
 import io
-from ldapSync import sync_ldap_to_database
+from threading import Thread
+
 from database import (
     add_door_to_database,
     check_access,
@@ -22,6 +13,15 @@ from database import (
     log_access_attempt,
 )
 from env import DBFILE, WebServerPORT
+from flask import (
+    Flask,
+    Response,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+)
+from ldapSync import sync_ldap_to_database
 
 app = Flask(__name__)
 
@@ -92,11 +92,9 @@ def add_door():
     group_cn = request.form["group_cn"]
 
     # Update with your database file path
-    exec = add_door_to_database(DBFILE, group_cn, Door_id)
     if add_door_to_database(DBFILE, group_cn, Door_id):
         return redirect("/")
-    else:
-        return f"Failed to add door to the database."
+    return "Failed to add door to the database."
 
 
 # Route to handle sync button click
@@ -121,14 +119,12 @@ def door_access():
         log_access_attempt(DBFILE, upn, rfid_uid, True, door_id)
         return jsonify({"access_granted": True, "upn": upn}), 200
 
-    else:
-        log_access_attempt(DBFILE, upn, rfid_uid, False, door_id)
-        return jsonify({"access_granted": False}), 403
+    log_access_attempt(DBFILE, upn, rfid_uid, False, door_id)
+    return jsonify({"access_granted": False}), 403
 
 
 def run_flask_app():
-    """
-    Run the Flask web application.
+    """Run the Flask web application.
 
     This function starts the Flask web application with debugging enabled,
     no reloader, on the specified port and host. It serves as the main entry
@@ -138,13 +134,12 @@ def run_flask_app():
 
 
 def run_webServer_thread():
-    """
-    Start the Flask web server in a separate thread.
+    """Start the Flask web server in a separate thread.
 
     This function initializes and starts a new thread to run the Flask web
     application. It allows the web server to run concurrently with other
     tasks in the main program, ensuring the web interface remains responsive.
-    """    
+    """
     print(f"STARTING WEB SERVER ON PORT {WebServerPORT}")
     flask_thread = Thread(target=run_flask_app, daemon=True)
     flask_thread.start()

@@ -1,12 +1,12 @@
-from datetime import datetime
 import sqlite3
+from datetime import datetime
+
 from env import DBFILE
 
 
 # Function to check if a table exists in the database
 def table_exists(cursor, table_name):
-    """
-    Check if a table exists in the database.
+    """Check if a table exists in the database.
 
     This function checks whether a table with the specified name exists in the database.
 
@@ -18,15 +18,15 @@ def table_exists(cursor, table_name):
     - bool: True if the table exists, False otherwise.
     """
     cursor.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,)
+        "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+        (table_name,),
     )
     return cursor.fetchone() is not None
 
 
 # Function to create the Users table
 def create_users_table(cursor):
-    """
-    Create the Users table in the database.
+    """Create the Users table in the database.
 
     This function creates the Users table with columns for user principal name (upn), RFID UID, and member of groups.
 
@@ -43,8 +43,7 @@ def create_users_table(cursor):
 
 # Function to create the Groups table
 def create_groups_table(cursor):
-    """
-    Create the Groups table in the database.
+    """Create the Groups table in the database.
 
     This function creates the Groups table with a single column for common name (cn) of the group.
 
@@ -58,8 +57,7 @@ def create_groups_table(cursor):
 
 # Function to create the Doors table
 def create_doors_table(cursor):
-    """
-    Create the Doors table in the database.
+    """Create the Doors table in the database.
 
     This function creates the Doors table with columns for door ID and associated group common name.
 
@@ -75,8 +73,7 @@ def create_doors_table(cursor):
 
 # Function to create the logs table
 def create_logs_table(cursor):
-    """
-    Create the logs table in the database.
+    """Create the logs table in the database.
 
     This function creates the logs table with columns for ID (auto-incremented), timestamp, user, RFID UID, door ID,
     and access granted status. Foreign key constraints are set on the door ID, user, and RFID UID columns.
@@ -101,8 +98,7 @@ def create_logs_table(cursor):
 
 # Function to setup the database
 def setup_database(db_file):
-    """
-    Set up the SQLite database by creating necessary tables if they don't already exist.
+    """Set up the SQLite database by creating necessary tables if they don't already exist.
 
     This function checks if the Users, Groups, Doors, and Log tables exist in the database. If any of them don't exist,
     it creates them using their respective creation functions. After creating or verifying the tables, it commits
@@ -150,8 +146,7 @@ def setup_database(db_file):
 
 
 def log_access_attempt(db_file, user, rFIDUID, granted, doorID):
-    """
-    Log an access attempt to the database.
+    """Log an access attempt to the database.
 
     This function inserts a new entry into the log table of the SQLite database, recording details about the access attempt,
     such as the timestamp, user, RFID UID, whether access was granted, and the door ID.
@@ -182,8 +177,7 @@ def log_access_attempt(db_file, user, rFIDUID, granted, doorID):
 
 
 def print_users_table(cursor):
-    """
-    Print the content of the Users table.
+    """Print the content of the Users table.
 
     ## Parameters:
     - cursor (sqlite3.Cursor): Cursor object for executing SQLite queries.
@@ -197,12 +191,11 @@ def print_users_table(cursor):
 
 # Function to print the content of the Groups table
 def print_groups_table(cursor):
-    """
-    Print the content of the Groups table.
+    """Print the content of the Groups table.
 
     ## Parameters:
     - cursor (sqlite3.Cursor): Cursor object for executing SQLite queries.
-    """   
+    """
     cursor.execute("SELECT * FROM Groups")
     rows = cursor.fetchall()
     print("Groups:")
@@ -212,8 +205,7 @@ def print_groups_table(cursor):
 
 # Function to print the content of the Doors table
 def print_doors_table(cursor):
-    """
-    Print the content of the Doors table.
+    """Print the content of the Doors table.
 
     ## Parameters:
     - cursor (sqlite3.Cursor): Cursor object for executing SQLite queries.
@@ -227,8 +219,7 @@ def print_doors_table(cursor):
 
 # Function to print the content of the Log table
 def print_log_table(cursor):
-    """
-    Print the content of the Log table.
+    """Print the content of the Log table.
 
     ## Parameters:
     - cursor (sqlite3.Cursor): Cursor object for executing SQLite queries.
@@ -242,8 +233,7 @@ def print_log_table(cursor):
 
 # Function to print the content of the entire database
 def print_database_content(db_file):
-    """
-    Print the content of the entire database.
+    """Print the content of the entire database.
 
     ## Parameters:
     - db_file (str): The file path to the SQLite database.
@@ -260,9 +250,8 @@ def print_database_content(db_file):
 
 
 def get_logs():
-    """
-    Fetch all logs from the log table in the database.
-    
+    """Fetch all logs from the log table in the database.
+
     ## Returns:
     - list: List of log records.
     """
@@ -282,8 +271,7 @@ def get_logs():
 
 
 def get_latest_logs(db_file, limit=10):
-    """
-    Fetch the latest logs from the database.
+    """Fetch the latest logs from the database.
 
     ## Parameters:
     - db_file (str): The file path to the SQLite database.
@@ -312,10 +300,9 @@ def get_latest_logs(db_file, limit=10):
 
 # Function to fetch list of existing groups from the database
 def get_existing_groups(db_file):
-    """
-    Fetches a list of existing groups from the database.
+    """Fetches a list of existing groups from the database.
 
-    ## Parameters: 
+    ## Parameters:
         - db_file (str): The file path to the SQLite database.
 
     ## Returns:
@@ -334,8 +321,7 @@ def get_existing_groups(db_file):
 
 
 def delete_group_from_database(group_cn):
-    """
-    Delete a group from the database.
+    """Delete a group from the database.
 
     This function deletes a group with the specified common name (cn) from both the Groups and Doors tables
     in the database.
@@ -352,8 +338,7 @@ def delete_group_from_database(group_cn):
 
 
 def get_doors():
-    """
-    Retrieve all doors from the database.
+    """Retrieve all doors from the database.
 
     This function fetches all rows from the Doors table in the database and returns them as a list of tuples.
 
@@ -369,9 +354,8 @@ def get_doors():
 
 
 def get_users():
-    """
-    Fetch all users from the Users table in the database.
-    
+    """Fetch all users from the Users table in the database.
+
     ## Returns:
         - list: List of user records.
     """
@@ -387,8 +371,7 @@ def get_users():
 
 # Function to add a door to the database
 def add_door_to_database(db_file, group_cn, Door_id):
-    """
-    Add a door to the database.
+    """Add a door to the database.
 
     This function inserts a new door record into the Doors table with the specified group common name (cn)
     and door ID.
@@ -425,8 +408,7 @@ def add_door_to_database(db_file, group_cn, Door_id):
 
 # Function to verify if the user is allowed to open the door
 def check_access(rfid_uid_str, door_id):
-    """
-    Check if the user is allowed to open the door.
+    """Check if the user is allowed to open the door.
 
     This function verifies if the user associated with the given RFID UID is allowed to open the door
     specified by the door ID.
@@ -450,7 +432,8 @@ def check_access(rfid_uid_str, door_id):
 
         # Get the user's UPN and group memberships based on the RFID UID
         cursor.execute(
-            "SELECT upn, MemberOf FROM Users WHERE rFIDUID = ?", (rfid_uid_bytes,)
+            "SELECT upn, MemberOf FROM Users WHERE rFIDUID = ?",
+            (rfid_uid_bytes,),
         )
         user_data = cursor.fetchone()
         if user_data is None:
@@ -472,8 +455,7 @@ def check_access(rfid_uid_str, door_id):
         # Check if the user's group is allowed to open the door
         if door_group in user_groups.split(","):
             return True, upn  # Access granted
-        else:
-            return False, None  # Access denied
+        return False, None  # Access denied
 
     except sqlite3.Error as e:
         print(f"SQLite Error: {e}")

@@ -1,15 +1,15 @@
-from datetime import datetime
-import ldap
 import sqlite3
 import threading
+from datetime import datetime
+
+import ldap
 import schedule
-from env import DOOR_ACCESS_GROUPS_DN, LDAPPASS, LDAPUSER, LDAP_SERVER, USERS_DN
+from env import DOOR_ACCESS_GROUPS_DN, LDAP_SERVER, LDAPPASS, LDAPUSER, USERS_DN
 
 
 # Function to initialize LDAP connection
 def initialize_ldap_connection():
-    """
-    Initialize the LDAP connection.
+    """Initialize the LDAP connection.
 
     This function attempts to establish a connection to the LDAP server using the provided server address,
     user credentials, and settings. If the connection is successful, it returns the connection object.
@@ -31,8 +31,7 @@ def initialize_ldap_connection():
 
 # Function to retrieve users from LDAP
 def retrieve_users_from_ldap(ldap_connection):
-    """
-    Retrieve users from LDAP.
+    """Retrieve users from LDAP.
 
     This function searches the LDAP directory for users within the specified base DN and returns the search result.
     It searches for objects with the 'user' object class within the subtree of the specified base DN.
@@ -47,7 +46,9 @@ def retrieve_users_from_ldap(ldap_connection):
     """
     try:
         result = ldap_connection.search_s(
-            USERS_DN, ldap.SCOPE_SUBTREE, "(objectClass=user)"
+            USERS_DN,
+            ldap.SCOPE_SUBTREE,
+            "(objectClass=user)",
         )
         return result
     except ldap.LDAPError as e:
@@ -57,8 +58,7 @@ def retrieve_users_from_ldap(ldap_connection):
 
 # Function to retrieve groups from LDAP
 def retrieve_groups_from_ldap(ldap_connection):
-    """
-    Retrieve groups from LDAP.
+    """Retrieve groups from LDAP.
 
     This function searches the LDAP directory for groups within the specified base DN and returns the search result.
     It searches for objects with the 'group' object class within the subtree of the specified base DN.
@@ -73,7 +73,9 @@ def retrieve_groups_from_ldap(ldap_connection):
     """
     try:
         result = ldap_connection.search_s(
-            DOOR_ACCESS_GROUPS_DN, ldap.SCOPE_SUBTREE, "(objectClass=group)"
+            DOOR_ACCESS_GROUPS_DN,
+            ldap.SCOPE_SUBTREE,
+            "(objectClass=group)",
         )
         return result
     except ldap.LDAPError as e:
@@ -83,8 +85,7 @@ def retrieve_groups_from_ldap(ldap_connection):
 
 # Function to add user to the database or update if already exists
 def add_user_to_database(conn, cursor, upn, rfid_uid, member_of):
-    """
-    Add a user to the database or update the user's information if they already exist.
+    """Add a user to the database or update the user's information if they already exist.
 
     This function checks if a user with the given UPN (User Principal Name) already exists in the database.
     If the user exists and their RFID UID or group membership has changed, the function updates the user's
@@ -117,7 +118,7 @@ def add_user_to_database(conn, cursor, upn, rfid_uid, member_of):
                 print(f"[{datetime.now()}] User '{upn}' updated in the database.")
             else:
                 print(
-                    f"[{datetime.now()}] User '{upn}' already exists in the database with the same data."
+                    f"[{datetime.now()}] User '{upn}' already exists in the database with the same data.",
                 )
         else:
             # User doesn't exist, insert new user
@@ -133,23 +134,26 @@ def add_user_to_database(conn, cursor, upn, rfid_uid, member_of):
 
 # Function to add group to the database or update if already exists
 def add_group_to_database(conn, cursor, cn):
-    """
-    Add a group to the database if it does not already exist.
+    """Add a group to the database if it does not already exist.
 
     This function checks if a group with the given CN (Common Name) already exists in the database.
     If the group exists, it prints a message indicating that the group already exists. If the group
     does not exist, it inserts a new record for the group.
 
-    Parameters:
+    Parameters
+    ----------
     conn (sqlite3.Connection): The SQLite database connection.
     cursor (sqlite3.Cursor): The cursor object for executing SQL queries.
     cn (str): The Common Name of the group.
 
-    Returns:
+    Returns
+    -------
     None
 
-    Raises:
+    Raises
+    ------
     sqlite3.Error: If an error occurs while accessing the SQLite database.
+
     """
     try:
         cursor.execute("SELECT * FROM Groups WHERE cn=?", (cn,))
@@ -168,13 +172,14 @@ def add_group_to_database(conn, cursor, cn):
 
 # Function to sync LDAP users and groups to the database
 def sync_ldap_to_database(db_file):
-    """
-    Syncs LDAP users and groups to the SQLite database.
+    """Syncs LDAP users and groups to the SQLite database.
 
     Args:
+    ----
         db_file (str): The path to the SQLite database file.
 
     Returns:
+    -------
         None
 
     This function connects to the LDAP server, retrieves user and group information,
@@ -183,8 +188,10 @@ def sync_ldap_to_database(db_file):
     and groups are added or updated in the database according to the LDAP information.
 
     Note:
+    ----
         The LDAP connection must be properly configured and the LDAP server accessible
         from the machine running this script.
+
     """
     ldap_conn = initialize_ldap_connection()
     if ldap_conn:
@@ -213,11 +220,11 @@ def sync_ldap_to_database(db_file):
                     cursor.execute("DELETE FROM Users WHERE upn=?", (upn,))
                     conn.commit()
                     print(
-                        f"[{datetime.now()}] User '{upn}' disabled in LDAP and removed from the database."
+                        f"[{datetime.now()}] User '{upn}' disabled in LDAP and removed from the database.",
                     )
                 else:
                     print(
-                        f"[{datetime.now()}] User '{upn}' disabled in LDAP but not present in the database."
+                        f"[{datetime.now()}] User '{upn}' disabled in LDAP but not present in the database.",
                     )
                 continue  # Skip adding the disabled user to the database
 
@@ -236,35 +243,39 @@ def sync_ldap_to_database(db_file):
 
 
 def run_sync_ldap_to_database_thread(db_file):
-    """
-    Run the LDAP synchronization process in a separate thread.
+    """Run the LDAP synchronization process in a separate thread.
 
     This function initiates the synchronization of LDAP data to the database in a background thread.
     It ensures that the LDAP synchronization runs asynchronously, allowing the main program to continue
     running without being blocked.
 
-    Parameters:
+    Parameters
+    ----------
     db_file (str): The path to the SQLite database file.
 
-    Returns:
+    Returns
+    -------
     None
+
     """
     print(f"[{datetime.now()}] Running LDAP sync")
     threading.Thread(target=sync_ldap_to_database, args=(db_file,), daemon=True).start()
 
 
 def schedule_sync_ldap_to_database(db_file):
-    """
-    Schedule the LDAP synchronization process to run immediately and then every 5 minutes.
+    """Schedule the LDAP synchronization process to run immediately and then every 5 minutes.
 
     This function runs the LDAP synchronization process in a background thread immediately upon invocation
     and sets up a recurring schedule to run the synchronization every 5 minutes.
 
-    Parameters:
+    Parameters
+    ----------
     db_file (str): The path to the SQLite database file.
 
-    Returns:
+    Returns
+    -------
     None
+
     """
     run_sync_ldap_to_database_thread(db_file)  # Run immediately
     schedule.every(5).minutes.do(run_sync_ldap_to_database_thread, db_file)
