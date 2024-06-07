@@ -9,12 +9,14 @@ from env import DOOR_ACCESS_GROUPS_DN, LDAPPASS, LDAPUSER, LDAP_SERVER, USERS_DN
 # Function to initialize LDAP connection
 def initialize_ldap_connection():
     """
-    ## Settings :
-        None
-        ## Behavior
-        Init the connection to the LDAP server.
-        Return LDAPobjet instance when connected
-        if it fail, return None and print error code
+    Initialize the LDAP connection.
+
+    This function attempts to establish a connection to the LDAP server using the provided server address,
+    user credentials, and settings. If the connection is successful, it returns the connection object.
+    In case of an error, it prints the error and returns None.
+
+    ## Returns:
+    - ldap.LDAPObject or None: The LDAP connection object if successful, otherwise None.
     """
     try:
         connect = ldap.initialize(LDAP_SERVER)
@@ -30,12 +32,18 @@ def initialize_ldap_connection():
 # Function to retrieve users from LDAP
 def retrieve_users_from_ldap(ldap_connection):
     """
-    ## Settings :
-    - ldap_connection : LDAPobjet instance
-    ## Behavior
-    retrieve the users in the specified OU
-    Return result when it success
-    if it fail, return empty list and print error code
+    Retrieve users from LDAP.
+
+    This function searches the LDAP directory for users within the specified base DN and returns the search result.
+    It searches for objects with the 'user' object class within the subtree of the specified base DN.
+
+    ## Parameters:
+    - ldap_connection (ldap.LDAPObject): The LDAP connection object.
+
+    ## Returns:
+    - list of tuple: A list of tuples containing the search result, where each tuple represents a user entry.
+                   Each tuple consists of the DN (Distinguished Name) of the user entry and its attributes.
+                   Returns an empty list if an error occurs during the LDAP search.
     """
     try:
         result = ldap_connection.search_s(
@@ -50,12 +58,18 @@ def retrieve_users_from_ldap(ldap_connection):
 # Function to retrieve groups from LDAP
 def retrieve_groups_from_ldap(ldap_connection):
     """
-    ## Settings :
-        - ldap_connection : LDAPobjet instance
-        ## Behavior
-        retrieve the groups in the specified OU
-        Return result when it success
-        if it fail, return empty list and print error code
+    Retrieve groups from LDAP.
+
+    This function searches the LDAP directory for groups within the specified base DN and returns the search result.
+    It searches for objects with the 'group' object class within the subtree of the specified base DN.
+
+    ## Parameters:
+    - ldap_connection (ldap.LDAPObject): The LDAP connection object.
+
+    ## Returns:
+    - list of tuple: A list of tuples containing the search result, where each tuple represents a group entry.
+                   Each tuple consists of the DN (Distinguished Name) of the group entry and its attributes.
+                   Returns an empty list if an error occurs during the LDAP search.
     """
     try:
         result = ldap_connection.search_s(
@@ -69,6 +83,26 @@ def retrieve_groups_from_ldap(ldap_connection):
 
 # Function to add user to the database or update if already exists
 def add_user_to_database(conn, cursor, upn, rfid_uid, member_of):
+    """
+    Add a user to the database or update the user's information if they already exist.
+
+    This function checks if a user with the given UPN (User Principal Name) already exists in the database.
+    If the user exists and their RFID UID or group membership has changed, the function updates the user's
+    record. If the user does not exist, the function inserts a new record for the user.
+
+    ## Parameters:
+    - conn (sqlite3.Connection): The SQLite database connection.
+    - cursor (sqlite3.Cursor): The cursor object for executing SQL queries.
+    - upn (str): The User Principal Name of the user.
+    - rfid_uid (str): The RFID UID associated with the user.
+    - member_of (str): The group membership (CN) of the user.
+
+    ## Returns:
+    - None
+
+    ## Raises:
+    - sqlite3.Error: If an error occurs while accessing the SQLite database.
+    """
     try:
         cursor.execute("SELECT * FROM Users WHERE upn=?", (upn,))
         existing_user = cursor.fetchone()
@@ -99,6 +133,24 @@ def add_user_to_database(conn, cursor, upn, rfid_uid, member_of):
 
 # Function to add group to the database or update if already exists
 def add_group_to_database(conn, cursor, cn):
+    """
+    Add a group to the database if it does not already exist.
+
+    This function checks if a group with the given CN (Common Name) already exists in the database.
+    If the group exists, it prints a message indicating that the group already exists. If the group
+    does not exist, it inserts a new record for the group.
+
+    Parameters:
+    conn (sqlite3.Connection): The SQLite database connection.
+    cursor (sqlite3.Cursor): The cursor object for executing SQL queries.
+    cn (str): The Common Name of the group.
+
+    Returns:
+    None
+
+    Raises:
+    sqlite3.Error: If an error occurs while accessing the SQLite database.
+    """
     try:
         cursor.execute("SELECT * FROM Groups WHERE cn=?", (cn,))
         existing_group = cursor.fetchone()
@@ -184,10 +236,35 @@ def sync_ldap_to_database(db_file):
 
 
 def run_sync_ldap_to_database_thread(db_file):
+    """
+    Run the LDAP synchronization process in a separate thread.
+
+    This function initiates the synchronization of LDAP data to the database in a background thread.
+    It ensures that the LDAP synchronization runs asynchronously, allowing the main program to continue
+    running without being blocked.
+
+    Parameters:
+    db_file (str): The path to the SQLite database file.
+
+    Returns:
+    None
+    """
     print(f"[{datetime.now()}] Running LDAP sync")
     threading.Thread(target=sync_ldap_to_database, args=(db_file,), daemon=True).start()
 
 
 def schedule_sync_ldap_to_database(db_file):
+    """
+    Schedule the LDAP synchronization process to run immediately and then every 5 minutes.
+
+    This function runs the LDAP synchronization process in a background thread immediately upon invocation
+    and sets up a recurring schedule to run the synchronization every 5 minutes.
+
+    Parameters:
+    db_file (str): The path to the SQLite database file.
+
+    Returns:
+    None
+    """
     run_sync_ldap_to_database_thread(db_file)  # Run immediately
     schedule.every(5).minutes.do(run_sync_ldap_to_database_thread, db_file)

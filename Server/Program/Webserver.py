@@ -118,7 +118,6 @@ def door_access():
 
     access_granted, upn = check_access(rfid_uid, door_id)
     if access_granted:
-        print("")
         log_access_attempt(DBFILE, upn, rfid_uid, True, door_id)
         return jsonify({"access_granted": True, "upn": upn}), 200
 
@@ -128,10 +127,24 @@ def door_access():
 
 
 def run_flask_app():
+    """
+    Run the Flask web application.
+
+    This function starts the Flask web application with debugging enabled,
+    no reloader, on the specified port and host. It serves as the main entry
+    point for running the web server.
+    """
     app.run(debug=True, use_reloader=False, port=WebServerPORT, host="0.0.0.0")
 
 
 def run_webServer_thread():
+    """
+    Start the Flask web server in a separate thread.
+
+    This function initializes and starts a new thread to run the Flask web
+    application. It allows the web server to run concurrently with other
+    tasks in the main program, ensuring the web interface remains responsive.
+    """    
     print(f"STARTING WEB SERVER ON PORT {WebServerPORT}")
     flask_thread = Thread(target=run_flask_app, daemon=True)
     flask_thread.start()
