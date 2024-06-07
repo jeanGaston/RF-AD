@@ -1,6 +1,5 @@
 #!/bin/sh
 ls /app/Program
-echo patate
 # Create env.py with environment variables
 cat <<EOT > /app/env.py
 LDAPUSER = "${LDAPUSER}"
