@@ -35,6 +35,15 @@ inactivity_timer = Timer(-1)
 
 
 def init_oled():
+    """
+    Initialize the OLED display.
+
+    This function initializes the OLED display with a width of 128 pixels, height of 64 pixels,
+    and communicates over the specified I2C interface.
+
+    ## Raises:
+    - Exception: If there's an error initializing the OLED display.
+    """
     global oled
     try:
         oled = SSD1306_I2C(128, 64, i2c)
@@ -47,6 +56,18 @@ def init_oled():
 
 
 def display_message(message, ip_address):
+    """
+    Display a message on the OLED screen.
+
+    This function displays a message on the OLED screen along with the IP address.
+
+    ## Parameters:
+        - message (str): The message to be displayed.
+        - ip_address (str): The IP address to be displayed.
+
+    ## Raises:
+        - Exception: If there's an error displaying the message on the OLED screen.
+    """
     global last_activity_time, screensaver_active, screensaver_thread_running
     last_activity_time = time.time()
     screensaver_active = False
@@ -70,6 +91,17 @@ def display_message(message, ip_address):
 
 
 def screensaver():
+    """
+    Activate the screensaver with RF-AD animation.
+
+    This function activates the screensaver by displaying an RF-AD animation moving across the screen.
+
+    ## Global Variables:
+        - screensaver_active (bool): Flag indicating if the screensaver is active.
+        - screensaver_thread_running (bool): Flag indicating if the screensaver thread is running.
+        - last_activity_time (float): Timestamp of the last activity.
+
+    """
     global screensaver_active, screensaver_thread_running
     x, y = 0, 0
     direction_x, direction_y = 1, 1
@@ -95,6 +127,16 @@ def screensaver():
 
 
 def start_screensaver_thread():
+    """
+    Start the screensaver thread if it's not already running.
+
+    This function starts the screensaver thread if it's not already running. It sets flags to indicate
+    the screensaver is active and the thread is running.
+
+    ## Global Variables:
+        - screensaver_active (bool): Flag indicating if the screensaver is active.
+        - screensaver_thread_running (bool): Flag indicating if the screensaver thread is running.
+    """
     global screensaver_active, screensaver_thread_running
     if not screensaver_thread_running:
         screensaver_active = True
@@ -102,17 +144,43 @@ def start_screensaver_thread():
         _thread.start_new_thread(screensaver, ())
 
 
-def handle_inactivity(timer):
+def handle_inactivity():
+    """
+    Handle user inactivity by starting the screensaver if necessary.
+
+    This function is called by a timer to check for user inactivity. If the specified time period
+    has passed since the last activity, it starts the screensaver thread.
+
+    """
     if time.time() - last_activity_time > 60:
         start_screensaver_thread()
 
 
 def reset_inactivity_timer():
+    """
+    Reset the inactivity timer.
+
+    This function resets the last activity time to the current time, effectively restarting the
+    inactivity timer.
+    """
     global last_activity_time
     last_activity_time = time.time()
 
 
 def test_server_connection(ip_address):
+    """
+    Test the connection to the server and handle connection errors.
+
+    This function tests the connection to the server by sending an HTTP GET request to the server
+    endpoint. It handles connection errors and displays appropriate messages on the OLED screen.
+
+    ## Parameters:
+        - ip_address (str): The IP address of the server.
+
+    ## Global Variables:
+        - SERVER_IP (str): The IP address of the server.
+        - SERVER_PORT (int): The port number of the server.
+    """
     while True:
         try:
             response = requests.get(f"http://{SERVER_IP}:{SERVER_PORT}/")
@@ -145,6 +213,21 @@ def test_server_connection(ip_address):
 
 # Connect to WiFi
 def connect_wifi(ssid, password):
+    """
+    Connect to a WiFi network.
+
+    This function connects the device to the specified WiFi network using the provided SSID and password.
+    It waits until the connection is established and then displays a message on the OLED screen indicating
+    successful connection.
+
+    ## Parameters:
+        - ssid (str): The SSID of the WiFi network.
+        - password (str): The password of the WiFi network.
+
+    ## Global Variables:
+        - SERVER_IP (str): The IP address of the server.
+        - SERVER_PORT (int): The port number of the server.
+    """
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
     wlan.connect(ssid, password)
@@ -161,6 +244,18 @@ def connect_wifi(ssid, password):
 
 # Function to send RFID UID to the server
 def send_rfid_to_server(rfid_uid):
+    """
+    Send RFID UID to the server for access verification.
+
+    This function constructs a JSON payload containing the RFID UID and the door ID, and sends it to the server
+    for access verification. It expects a JSON response from the server indicating whether access is granted.
+
+    ## Parameters:
+        - rfid_uid (str): The RFID UID to be sent to the server.
+
+    ## Returns:
+        - dict: A dictionary containing the response from the server, indicating whether access is granted.
+    """
     try:
         url = f"http://{SERVER_IP}:{SERVER_PORT}/access"
         headers = {"Content-Type": "application/json"}
@@ -175,6 +270,15 @@ def send_rfid_to_server(rfid_uid):
 
 # Main loop to scan RFID tags
 def main():
+    """
+    Main loop to scan RFID tags and handle access control.
+
+    This function initializes the OLED display, connects to WiFi, and starts a loop to scan RFID tags.
+    It handles user authentication by sending the RFID UID to the server and displaying access status on the OLED.
+
+    The function also sets up an inactivity timer to activate a screensaver after 1 minute of inactivity.
+
+    """
     # Retry mechanism for OLED initialization
     for _ in range(3):
         try:
