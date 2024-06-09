@@ -98,7 +98,7 @@ You'll need to change it in the [reader code](../Client/main.py) and in the [doc
 
 Execute this code 
 ```bash
-docker-compose build --no-cache
-docker-compose up
+docker compose build --no-cache
+docker compose up -d
 ```
 
