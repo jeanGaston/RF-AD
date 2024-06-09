@@ -114,7 +114,6 @@ def draw_circle(oled, x0, y0, radius, color):
 # Screensaver function with circular wave animation
 def screensaver():
     """
-<<<<<<< Updated upstream
     Activate the screensaver with RF-AD animation.
 
     This function activates the screensaver by displaying an RF-AD animation moving across the screen.
@@ -124,9 +123,6 @@ def screensaver():
         - screensaver_thread_running (bool): Flag indicating if the screensaver thread is running.
         - last_activity_time (float): Timestamp of the last activity.
 
-=======
-    Screensaver function with circular wave animation
->>>>>>> Stashed changes
     """
     global screensaver_active, screensaver_thread_running
     text = "RF-AD"
@@ -135,22 +131,25 @@ def screensaver():
     radius = 36
     max_radius = 64  # Maximum radius for the animation
     while screensaver_active:
-        oled.fill(0)        
-        oled.text(text, 44, 28)
-        
-        # Draw expanding circles
-        for r in range(radius, max_radius, 5):
-            draw_circle(oled, center_x, center_y, r, 1)
-        
-        oled.show()
-        radius += 1
-        if radius > max_radius:
-            radius = 36
-        
-        time.sleep(0.01)
-
+        try: 
+            oled.fill(0)        
+            oled.text(text, 44, 28)
+            
+            # Draw expanding circles
+            for r in range(radius, max_radius, 5):
+                draw_circle(oled, center_x, center_y, r, 1)
+            
+            oled.show()
+            radius += 1
+            if radius > max_radius:
+                radius = 36
+            
+            time.sleep(0.01)
+        except Exception as e:
+            break
         # Check for activity
         if time.time() - last_activity_time <= 60:
+            oled.fill(0)
             screensaver_active = False
             screensaver_thread_running = False
             break
@@ -171,10 +170,10 @@ def start_screensaver_thread():
     if not screensaver_thread_running:
         screensaver_active = True
         screensaver_thread_running = True
-        _thread.start_new_thread(screensaver, ())
+        _thread.start_new_thread(screensaver,())
 
 
-def handle_inactivity():
+def handle_inactivity(timer):
     """
     Handle user inactivity by starting the screensaver if necessary.
 
