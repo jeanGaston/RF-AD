@@ -1,3 +1,4 @@
+import math
 import network
 import urequests as requests
 import ujson as json
@@ -89,9 +90,31 @@ def display_message(message, ip_address):
         print("display error:", e)
         init_oled()
 
+# Function to draw a circle
+def draw_circle(oled, x0, y0, radius, color):
+    x = radius
+    y = 0
+    err = 0
 
+    while x >= y:
+        oled.pixel(x0 + x, y0 + y, color)
+        oled.pixel(x0 + y, y0 + x, color)
+        oled.pixel(x0 - y, y0 + x, color)
+        oled.pixel(x0 - x, y0 + y, color)
+        oled.pixel(x0 - x, y0 - y, color)
+        oled.pixel(x0 - y, y0 - x, color)
+        oled.pixel(x0 + y, y0 - x, color)
+        oled.pixel(x0 + x, y0 - y, color)
+        y += 1
+        err += 1 + 2*y
+        if 2*(err - x) + 1 > 0:
+            x -= 1
+            err += 1 - 2*x
+
+# Screensaver function with circular wave animation
 def screensaver():
     """
+<<<<<<< Updated upstream
     Activate the screensaver with RF-AD animation.
 
     This function activates the screensaver by displaying an RF-AD animation moving across the screen.
@@ -101,23 +124,30 @@ def screensaver():
         - screensaver_thread_running (bool): Flag indicating if the screensaver thread is running.
         - last_activity_time (float): Timestamp of the last activity.
 
+=======
+    Screensaver function with circular wave animation
+>>>>>>> Stashed changes
     """
     global screensaver_active, screensaver_thread_running
-    x, y = 0, 0
-    direction_x, direction_y = 1, 1
+    text = "RF-AD"
+    center_x = 64  # Center horizontally
+    center_y = 32  # Center vertically
+    radius = 36
+    max_radius = 64  # Maximum radius for the animation
     while screensaver_active:
-        oled.fill(0)
-        oled.text("RF-AD", x, y)
+        oled.fill(0)        
+        oled.text(text, 44, 28)
+        
+        # Draw expanding circles
+        for r in range(radius, max_radius, 5):
+            draw_circle(oled, center_x, center_y, r, 1)
+        
         oled.show()
-        time.sleep(0.05)
-
-        x += direction_x
-        y += direction_y
-
-        if x <= 0 or x >= 128 - 36:  # 36 is the length of "RF-AD"
-            direction_x *= -1
-        if y <= 0 or y >= 64 - 10:  # 10 is the height of text
-            direction_y *= -1
+        radius += 1
+        if radius > max_radius:
+            radius = 36
+        
+        time.sleep(0.01)
 
         # Check for activity
         if time.time() - last_activity_time <= 60:
