@@ -90,6 +90,7 @@ def display_message(message, ip_address):
         print("display error:", e)
         init_oled()
 
+
 # Function to draw a circle
 def draw_circle(oled, x0, y0, radius, color):
     x = radius
@@ -106,10 +107,11 @@ def draw_circle(oled, x0, y0, radius, color):
         oled.pixel(x0 + y, y0 - x, color)
         oled.pixel(x0 + x, y0 - y, color)
         y += 1
-        err += 1 + 2*y
-        if 2*(err - x) + 1 > 0:
+        err += 1 + 2 * y
+        if 2 * (err - x) + 1 > 0:
             x -= 1
-            err += 1 - 2*x
+            err += 1 - 2 * x
+
 
 # Screensaver function with circular wave animation
 def screensaver():
@@ -131,19 +133,19 @@ def screensaver():
     radius = 36
     max_radius = 64  # Maximum radius for the animation
     while screensaver_active:
-        try: 
-            oled.fill(0)        
+        try:
+            oled.fill(0)
             oled.text(text, 44, 28)
-            
+
             # Draw expanding circles
             for r in range(radius, max_radius, 5):
                 draw_circle(oled, center_x, center_y, r, 1)
-            
+
             oled.show()
             radius += 1
             if radius > max_radius:
                 radius = 36
-            
+
             time.sleep(0.01)
         except Exception as e:
             break
@@ -170,7 +172,7 @@ def start_screensaver_thread():
     if not screensaver_thread_running:
         screensaver_active = True
         screensaver_thread_running = True
-        _thread.start_new_thread(screensaver,())
+        _thread.start_new_thread(screensaver, ())
 
 
 def handle_inactivity(timer):
