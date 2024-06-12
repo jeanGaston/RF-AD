@@ -33,6 +33,7 @@ last_activity_time = time.time()
 screensaver_active = False
 screensaver_thread_running = False
 inactivity_timer = Timer(-1)
+SCREEN_TIMEOUT = 20
 
 
 def init_oled():
@@ -150,8 +151,8 @@ def screensaver():
         except Exception as e:
             break
         # Check for activity
-        if time.time() - last_activity_time <= 60:
-            oled.fill(0)
+        if time.time() - last_activity_time <= SCREEN_TIMEOUT:
+            #oled.fill(0)
             screensaver_active = False
             screensaver_thread_running = False
             break
@@ -183,7 +184,7 @@ def handle_inactivity(timer):
     has passed since the last activity, it starts the screensaver thread.
 
     """
-    if time.time() - last_activity_time > 60:
+    if time.time() - last_activity_time > SCREEN_TIMEOUT:
         start_screensaver_thread()
 
 
